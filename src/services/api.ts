@@ -4,11 +4,18 @@ import { Package, Video, FinancialReport, Client } from '@/types';
 import { Console } from 'console';
 
 const api = axios.create({
-  baseURL: 'http://31.97.27.223:5000',
+  baseURL: 'http://localhost:5219',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// const api = axios.create({
+//   baseURL: 'https://www.divulga-ai.net.br',
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
 // Interceptor para adicionar o token em todas as requisições
 api.interceptors.request.use((config) => {
@@ -205,6 +212,7 @@ export const getVideosByPackageId = async (codigoPacote: number) => {
 export const updateVideoStatus = async (codigoVideo: number, novoStatus: string) => {
   try {
     console.log('chegamos aqui no updateVideoStatus ' + novoStatus);
+
     const response = await api.patch(
       `/api/Pacote/AtualizarStatusVideo/${codigoVideo}`,
       { Status: novoStatus },
@@ -212,10 +220,36 @@ export const updateVideoStatus = async (codigoVideo: number, novoStatus: string)
         headers: { 'Content-Type': 'application/json' }
       }
     );
+
     console.log('resposta da api updateVideoStatus: ', response.data);
     return response.data;
+
   } catch (error: any) {
-    console.error('Erro:', error.response?.data);
+    const statusCode = error.response?.status;
+    console.error('Erro na primeira tentativa:', error.response?.data);
+
+    // Se for erro 404, tenta na rota alternativa
+    if (statusCode === 404) {
+      try {
+        console.log('Tentando na rota alternativa /api/Post/AtualizarStatusVideo');
+
+        const fallbackResponse = await api.patch(
+          `/api/Post/AtualizarStatusVideo/${codigoVideo}`,
+          { Status: novoStatus },
+          {
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+
+        console.log('resposta da api fallback updateVideoStatus: ', fallbackResponse.data);
+        return fallbackResponse.data;
+
+      } catch (fallbackError: any) {
+        console.error('Erro na rota alternativa:', fallbackError.response?.data);
+        throw new Error(fallbackError.response?.data?.message || 'Erro ao atualizar status do vídeo na rota alternativa');
+      }
+    }
+
     throw new Error(error.response?.data?.message || 'Erro ao atualizar status do vídeo');
   }
 };

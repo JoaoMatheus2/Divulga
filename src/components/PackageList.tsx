@@ -13,16 +13,18 @@ import {
   DollarSign, 
   Calendar,
   User,
-  TrendingUp
+  TrendingUp,
+  CreditCard
 } from 'lucide-react';
 
 interface PackageListProps {
   packages: Package[];
   onManageVideos: (pkg: Package) => void;
+  onManagePayments?: (pkg: Package) => void;
   onRefresh: () => void;
 }
 
-const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onRefresh }) => {
+const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onManagePayments, onRefresh }) => {
   const { user } = useAuth();
 
   const getStatusColor = (status: Package['status']) => {
@@ -33,7 +35,7 @@ const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onR
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
+  
   const getStatusLabel = (status: Package['status']) => {
     switch (status) {
       case 'active': return 'Ativo';
@@ -99,16 +101,30 @@ const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onR
                 Criado em {format(new Date(pkg.createdAt), "dd/MM/yyyy", { locale: ptBR })}
               </div>
               
-              {(user?.role === 'admin' || user?.role === 'video_manager') && (
-                <Button 
-                  onClick={() => onManageVideos(pkg)}
-                  className="w-full"
-                  size="sm"
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  Gerenciar Vídeos
-                </Button>
-              )}
+              <div className="space-y-2">
+                {(user?.role === 'admin' || user?.role === 'video_manager') && pkg.type === 'package' && (
+                  <Button 
+                    onClick={() => onManageVideos(pkg)}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Gerenciar Vídeos
+                  </Button>
+                )}
+
+                {(user?.role === 'admin' || user?.role === 'financial') && onManagePayments && (
+                  <Button 
+                    onClick={() => onManagePayments(pkg)}
+                    className="w-full"
+                    size="sm"
+                    variant="outline"
+                  >
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Gerenciar Pagamentos
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="text-xs text-gray-500 space-y-1">

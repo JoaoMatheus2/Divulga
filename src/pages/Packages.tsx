@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import PackageForm from '@/components/PackageForm';
 import PackageList from '@/components/PackageList';
 import VideoManager from '@/components/VideoManager';
+import PaymentManager from '@/components/PaymentManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Package } from '@/types';
@@ -18,6 +19,7 @@ const Packages = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [showVideoManager, setShowVideoManager] = useState(false);
+  const [showPaymentManager, setShowPaymentManager] = useState(false);
 
   useEffect(() => {
     loadPackages();
@@ -45,6 +47,13 @@ const Packages = () => {
   const handleManageVideos = (pkg: Package) => {
     setSelectedPackage(pkg);
     setShowVideoManager(true);
+    setShowPaymentManager(false);
+  };
+
+  const handleManagePayments = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setShowPaymentManager(true);
+    setShowVideoManager(false);
   };
 
   if (loading) {
@@ -106,10 +115,26 @@ const Packages = () => {
           </Card>
         )}
 
+        {showPaymentManager && selectedPackage && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Gerenciar Pagamentos - {selectedPackage.clientName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentManager
+                package={selectedPackage}
+                onClose={() => setShowPaymentManager(false)}
+                onUpdate={loadPackages}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         <PackageList
           packages={packages}
           onManageVideos={handleManageVideos}
-          onRefresh={loadPackages}
+          onManagePayments={handleManagePayments}         
+           onRefresh={loadPackages}
         />
       </div>
     </Layout>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import PackageForm from '@/components/PackageForm';
 import VideoManager from '@/components/VideoManager';
+import PaymentManager from '@/components/PaymentManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ptBR } from 'date-fns/locale'
 import { format } from 'date-fns'
 
-import { Plus, FileText, DollarSign, Calendar, User, Play } from 'lucide-react';
+import { Plus, FileText, DollarSign, Calendar, User, Play, CreditCard } from 'lucide-react';
 
 const Posts = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ const Posts = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Package | null>(null);
   const [showVideoManager, setShowVideoManager] = useState(false);
+  const [showPaymentManager, setShowPaymentManager] = useState(false);
 
   useEffect(() => {
     loadPosts();
@@ -48,6 +50,13 @@ const Posts = () => {
   const handleManageVideos = (post: Package) => {
     setSelectedPost(post);
     setShowVideoManager(true);
+    setShowPaymentManager(false);
+  };
+
+  const handleManagePayments = (post: Package) => {
+    setSelectedPost(post);
+    setShowPaymentManager(true);
+    setShowVideoManager(false);
   };
 
   const getStatusColor = (status: Package['status']) => {
@@ -134,6 +143,22 @@ const Posts = () => {
             </CardContent>
           </Card>
         )}
+        
+      {showPaymentManager && selectedPost && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Gerenciar Pagamentos - {selectedPost.clientName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentManager
+                package={selectedPost}
+                onClose={() => setShowPaymentManager(false)}
+                onUpdate={loadPosts}
+              />
+            </CardContent>
+          </Card>
+        )}
+
 
         {posts.length === 0 ? (
           <Card>
@@ -193,16 +218,30 @@ const Posts = () => {
                 <Calendar className="h-3 w-3 mr-1" />
                 Criado em {format(new Date(post.createdAt), "dd/MM/yyyy", { locale: ptBR })}
               </div>
-              {(user?.role === 'admin' || user?.role === 'video_manager') && (
-                      <Button 
-                        onClick={() => handleManageVideos(post)}
-                        className="w-full"
-                        size="sm"
-                      >
-                        <Play className="mr-2 h-4 w-4" />
-                        Gerenciar Vídeo
-                      </Button>
-                    )}
+              <div className="space-y-2">
+                      {(user?.role === 'admin' || user?.role === 'video_manager') && (
+                        <Button 
+                          onClick={() => handleManageVideos(post)}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Gerenciar Vídeo
+                        </Button>
+                      )}
+                      
+                      {(user?.role === 'admin' || user?.role === 'financial') && (
+                        <Button 
+                          onClick={() => handleManagePayments(post)}
+                          className="w-full"
+                          size="sm"
+                          variant="outline"
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Gerenciar Pagamentos
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -15,6 +15,13 @@ export interface Client {
   updatedAt: Date;
 }
 
+export interface PaymentStatus {
+  totalValuePaid: boolean;
+  juninhoCommissionPaid: boolean;
+  nataliaCommissionPaid: boolean;
+  engagementCostPaid: boolean;
+  proLaborePaid: boolean;
+}
 
 export interface Package {
   id: string;

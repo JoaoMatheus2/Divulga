@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Video, VIDEO_STATUS_LABELS } from '@/types';
 import { getVideosByPackageId, updateVideoStatus } from '@/services/api';
+import { updatePackageStatus } from '@/services/dataService';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -26,6 +27,7 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
   const { user } = useAuth();
   const { addNotification } = useNotifications();
   const [videos, setVideos] = useState<Video[]>([]);
+  const [currentPackage, setCurrentPackage] = useState<Package>(pkg);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
 
@@ -45,6 +47,30 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
     }
   };
 
+  const checkAndUpdatePackageCompletion = async (updatedVideos: Video[]) => {
+    // Only check for packages that are currently active
+    if (currentPackage.status !== 'active') return;
+
+    // Check if all videos are engaged (completed)
+    const allVideosCompleted = updatedVideos.every(video => video.status === 'engaged');
+
+    if (allVideosCompleted && updatedVideos.length > 0) {
+      try {
+        const updatedPackage = await updatePackageStatus(pkg.id, 'completed');
+        if (updatedPackage) {
+          setCurrentPackage(updatedPackage);
+          addNotification({
+            title: 'Pacote Concluído!',
+            message: `O pacote de ${pkg.clientName} foi automaticamente marcado como concluído.`,
+            type: 'success'
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar status do pacote:', error);
+      }
+    }
+  };
+
   const handleStatusUpdate = async (videoId: number, newStatus: Video['status']) => {
     setUpdating(videoId);
     
@@ -52,11 +78,13 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
       const updatedVideo = await updateVideoStatus(videoId, newStatus);
       
       if (updatedVideo) {
-        setVideos(prev => 
-          prev.map(video => 
-            video.id === videoId ? updatedVideo : video
-          )
+        const updatedVideos = videos.map(video => 
+          video.id === videoId ? updatedVideo : video
         );
+        setVideos(updatedVideos);
+
+        // Check if package should be marked as completed
+        await checkAndUpdatePackageCompletion(updatedVideos);
 
         // Se o status foi alterado para "video_posted", enviar notificação
         if (newStatus === 'video_posted') {
@@ -134,9 +162,16 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">
-          Vídeos do Pacote: {pkg.clientName}
-        </h3>
+      <div>
+          <h3 className="text-lg font-semibold">
+            Vídeos do Pacote: {pkg.clientName}
+          </h3>
+          <Badge className={currentPackage.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
+            {currentPackage.status === 'active' ? 'Ativo' : 
+             currentPackage.status === 'completed' ? 'Concluído' : 
+             currentPackage.status === 'cancelled' ? 'Cancelado' : currentPackage.status}
+          </Badge>
+        </div>
         <Button variant="outline" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -168,7 +203,7 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
                   Última atualização: {new Date(video.updatedAt).toLocaleString()}
                 </div>
 
-                {nextStatus && canUpdate && (
+                {nextStatus && canUpdate && currentPackage.status === 'active' && (
                   <Button
                     size="sm"
                     className="w-full"
@@ -191,6 +226,13 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-1" />
                     <div className="text-xs text-green-600 font-medium">
                       Concluído
+                    </div>
+                  </div>
+                )}
+                {currentPackage.status === 'completed' && (
+                  <div className="text-center py-1">
+                    <div className="text-xs text-gray-500">
+                      Pacote finalizado
                     </div>
                   </div>
                 )}
@@ -220,6 +262,11 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
             </span>
           </div>
         </div>
+        {currentPackage.status === 'completed' && (
+          <div className="mt-2 text-sm text-green-600 font-medium">
+            ✅ Pacote totalmente concluído!
+          </div>
+        )}
       </div>
     </div>
   );

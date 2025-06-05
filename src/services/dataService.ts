@@ -1,5 +1,5 @@
 
-import { Package, Video, FinancialReport, Client } from '@/types';
+import { Package, Video, FinancialReport, Client, PaymentStatus } from '@/types';
 
 // Mock data storage
 let packages: Package[] = [];
@@ -83,10 +83,17 @@ export const getClientRevenue = async (clientId: string): Promise<number> => {
 };
 
 // Create a new package
-export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt'>): Promise<Package> => {
+export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt' | 'paymentStatus'>): Promise<Package> => {
   const newPackage: Package = {
     ...packageData,
     id: generateId(),
+    paymentStatus: {
+      totalValuePaid: false,
+      juninhoCommissionPaid: false,
+      nataliaCommissionPaid: false,
+      engagementCostPaid: false,
+      proLaborePaid: false
+    },
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -123,7 +130,21 @@ export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt
   return newPackage;
 };
 
-
+// Update package status
+export const updatePackageStatus = async (packageId: string, status: Package['status']): Promise<Package | null> => {
+  const packageIndex = packages.findIndex(pkg => pkg.id === packageId);
+  
+  if (packageIndex !== -1) {
+    packages[packageIndex] = {
+      ...packages[packageIndex],
+      status,
+      updatedAt: new Date()
+    };
+    return packages[packageIndex];
+  }
+  
+  return null;
+};
 
 // Get videos by package ID
 
@@ -143,6 +164,49 @@ export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt
   
 //   return null;
 // };
+
+// Update payment status
+export const updatePaymentStatus = async (packageId: string, paymentField: keyof PaymentStatus, paid: boolean): Promise<Package | null> => {
+  const packageIndex = packages.findIndex(pkg => pkg.id === packageId);
+  
+  if (packageIndex !== -1) {
+    packages[packageIndex] = {
+      ...packages[packageIndex],
+      paymentStatus: {
+        ...packages[packageIndex].paymentStatus,
+        [paymentField]: paid
+      },
+      updatedAt: new Date()
+    };
+    return packages[packageIndex];
+  }
+  
+  return null;
+};
+
+// Get package payment summary
+export const getPackagePaymentSummary = async (packageId: string) => {
+  const pkg = packages.find(p => p.id === packageId);
+  if (!pkg) return null;
+
+  const payments = [
+    { name: 'Valor Total', amount: pkg.totalValue, paid: pkg.paymentStatus.totalValuePaid, field: 'totalValuePaid' as keyof PaymentStatus },
+    { name: 'Comissão Juninho', amount: pkg.juninhoCommission, paid: pkg.paymentStatus.juninhoCommissionPaid, field: 'juninhoCommissionPaid' as keyof PaymentStatus },
+    { name: 'Comissão Natália', amount: pkg.nataliaCommission, paid: pkg.paymentStatus.nataliaCommissionPaid, field: 'nataliaCommissionPaid' as keyof PaymentStatus },
+    { name: 'Custo Engajamento', amount: pkg.engagementCost, paid: pkg.paymentStatus.engagementCostPaid, field: 'engagementCostPaid' as keyof PaymentStatus },
+    { name: 'Pró-Labore', amount: pkg.proLabore, paid: pkg.paymentStatus.proLaborePaid, field: 'proLaborePaid' as keyof PaymentStatus }
+  ];
+
+  const totalPaid = payments.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+  const totalPending = payments.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+
+  return {
+    payments,
+    totalPaid,
+    totalPending,
+    allPaid: payments.every(p => p.paid)
+  };
+};
 
 // Get financial report
 export const getFinancialReport = async (startDate?: Date, endDate?: Date): Promise<FinancialReport> => {

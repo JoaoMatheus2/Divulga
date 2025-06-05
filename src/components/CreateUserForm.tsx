@@ -20,7 +20,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   const createUser = async (userData: { nome: string; login: string; senha: string; role: string; ativo: boolean }) => {
     // aqui você chama sua API (exemplo)
     console.log(userData);
-    await fetch('http://31.97.27.223:5000/api/Usuario/Inserir', {
+    await fetch('https://www.divulga-ai.net.br/api/Usuario/Inserir', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),

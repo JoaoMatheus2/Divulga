@@ -96,7 +96,7 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
     setLoading(true);
 
     try {
-      const packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt'> = {
+      const packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt' | 'paymentStatus'> = {
         clientId: selectedClient?.id,
         clientName: formData.clientName,
         type,
