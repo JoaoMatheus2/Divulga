@@ -17,32 +17,38 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   const [role, setRole] = useState<'admin' | 'video_manager' | 'financial'>('video_manager');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const createUser = async (userData: { nome: string; login: string; senha: string; role: string; ativo: boolean }) => {
+    // aqui você chama sua API (exemplo)
+    console.log(userData);
+    await fetch('http://31.97.27.223:5000/api/Usuario/Inserir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Simular criação de usuário
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: 'Usuário criado com sucesso!',
-        description: `${name} foi adicionado ao sistema.`,
-      });
-      
-      // Reset form
+      const userData = {
+        nome: name,
+        login: email,
+        senha: password,
+        role,
+        ativo: true,
+      };
+
+      await createUser(userData);
+
+      onSuccess?.();
+
+      // limpar campos
       setName('');
       setEmail('');
       setPassword('');
       setRole('video_manager');
-      
-      onSuccess();
-    } catch (error) {
-      toast({
-        title: 'Erro ao criar usuário',
-        description: 'Ocorreu um erro ao criar o usuário. Tente novamente.',
-        variant: 'destructive',
-      });
     } finally {
       setIsSubmitting(false);
     }

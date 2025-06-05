@@ -4,7 +4,7 @@ import { Package, Video, FinancialReport, Client } from '@/types';
 import { Console } from 'console';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5219',
+  baseURL: 'http://31.97.27.223:5000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -109,6 +109,9 @@ export const createPackage = async (packageData: Package): Promise<any> => {
       proLabore: packageData.proLabore,
       netProfit: packageData.netProfit,
       clientId: packageData.clientId,
+      clientName: packageData.clientName,  // PRECISA ter isso
+      type: packageData.type,              // PRECISA ter isso
+      status: packageData.status,          // PRECISA ter isso
       listaPacoteItem: [] as { numeroVideo: number; }[]
     };
 
