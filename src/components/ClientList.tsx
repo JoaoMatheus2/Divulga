@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,9 @@ import {
   Eye,
   DollarSign,
   Building,
-  Star
+  Star,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 interface ClientListProps {
@@ -23,9 +26,13 @@ interface ClientListProps {
   onViewDetails: (client: Client) => void;
 }
 
+type SortField = 'name' | 'status' | 'revenue';
+type SortDirection = 'asc' | 'desc';
 const ClientList: React.FC<ClientListProps> = ({ clients, onEdit, onRefresh, onViewDetails }) => {
   const { addNotification } = useNotifications();
   const [clientRevenues, setClientRevenues] = useState<Record<string, number>>({});
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     const loadClientRevenues = async () => {
@@ -40,6 +47,53 @@ const ClientList: React.FC<ClientListProps> = ({ clients, onEdit, onRefresh, onV
       loadClientRevenues();
     }
   }, [clients]);
+
+
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? 
+      <ChevronUp className="h-4 w-4 ml-1" /> : 
+      <ChevronDown className="h-4 w-4 ml-1" />;
+  };
+
+  const sortedClients = React.useMemo(() => {
+    if (!sortField) return clients;
+
+    return [...clients].sort((a, b) => {
+      let valueA, valueB;
+
+      switch (sortField) {
+        case 'name':
+          valueA = a.name.toLowerCase();
+          valueB = b.name.toLowerCase();
+          break;
+        case 'status':
+          valueA = a.isFrequent ? 1 : 0;
+          valueB = b.isFrequent ? 1 : 0;
+          break;
+        case 'revenue':
+          valueA = clientRevenues[a.id] || 0;
+          valueB = clientRevenues[b.id] || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [clients, sortField, sortDirection, clientRevenues]);
 
   const handleDelete = async (client: Client) => {
     if (window.confirm(`Tem certeza que deseja excluir o cliente "${client.name}"?`)) {
@@ -86,15 +140,42 @@ const ClientList: React.FC<ClientListProps> = ({ clients, onEdit, onRefresh, onV
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
+            <TableHead>
+                <Button 
+                  variant="ghost" 
+                  className="p-0 h-auto font-medium text-left justify-start"
+                  onClick={() => handleSort('name')}
+                >
+                  Cliente
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
               <TableHead>Agência</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Receita Total</TableHead>
+              <TableHead>
+                <Button 
+                  variant="ghost" 
+                  className="p-0 h-auto font-medium text-left justify-start"
+                  onClick={() => handleSort('status')}
+                >
+                  Status
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button 
+                  variant="ghost" 
+                  className="p-0 h-auto font-medium text-left justify-start"
+                  onClick={() => handleSort('revenue')}
+                >
+                  Receita Total
+                  {getSortIcon('revenue')}
+                </Button>
+              </TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
+            {sortedClients.map((client) => (
               <TableRow key={client.id}>
                 <TableCell>
                   <div className="flex items-center">

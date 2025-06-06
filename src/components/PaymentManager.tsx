@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Package, PaymentStatus } from '@/types';
-import { updatePaymentStatus, getPackagePaymentSummary } from '@/services/dataService';
+import { getPackagePaymentSummary, updatePaymentStatus } from '@/services/api';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DollarSign, Check, X, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
@@ -30,7 +30,8 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
   const [contasAPagar, setContasAPagar] = useState<PaymentItem[]>([]);
   const [totalRecebido, setTotalRecebido] = useState(0);
   const [totalPago, setTotalPago] = useState(0);
-  const [totalPendente, setTotalPendente] = useState(0);
+  const [totalPendenteReceber, setTotalPendenteReceber] = useState(0);
+  const [totalPendentePagar, setTotalPendentePagar] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,7 +40,8 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
 
   const loadPaymentData = async () => {
     try {
-      const summary = await getPackagePaymentSummary(pkg.id);
+      console.log('carregando dados de pagamento...');
+      const summary = await getPackagePaymentSummary(pkg.id, pkg.type);
       if (summary) {
         // Separar contas a receber (valor total) das contas a pagar (custos)
         const receber = summary.payments.filter(p => p.field === 'totalValuePaid');
@@ -50,11 +52,14 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
         
         const totalRecebidoCalc = receber.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
         const totalPagoCalc = pagar.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
-        const totalPendenteCalc = summary.payments.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
-        
+        const totalPendenteReceberCalc = receber.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+        const totalPendentePagarCalc = pagar.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+
         setTotalRecebido(totalRecebidoCalc);
         setTotalPago(totalPagoCalc);
-        setTotalPendente(totalPendenteCalc);
+        setTotalPendenteReceber(totalPendenteReceberCalc);
+        setTotalPendentePagar(totalPendentePagarCalc);
+
       }
     } catch (error) {
       console.error('Erro ao carregar dados de pagamento:', error);
@@ -73,7 +78,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
 
     setLoading(true);
     try {
-      await updatePaymentStatus(pkg.id, field, paid);
+      await updatePaymentStatus(pkg.id, field, paid, pkg.type);
       
       addNotification({
         title: 'Pagamento Atualizado',
@@ -122,7 +127,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
@@ -130,6 +135,18 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Recebido</p>
                 <p className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</p>
+                </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <DollarSign className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Pendente a Receber</p>
+                <p className="text-2xl font-bold text-orange-600">R$ {totalPendenteReceber.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -150,10 +167,10 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <DollarSign className="h-8 w-8 text-orange-600" />
+            <DollarSign className="h-8 w-8 text-yellow-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Pendente</p>
-                <p className="text-2xl font-bold text-orange-600">R$ {totalPendente.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-600">Pendente a Pagar</p>
+                <p className="text-2xl font-bold text-yellow-600">R$ {totalPendentePagar.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>

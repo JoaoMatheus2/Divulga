@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import FinancialReports from '@/components/FinancialReports';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FinancialReport } from '@/types';
-import { getFinancialReport } from '@/services/dataService';
+import { getFinancialReport } from '@/services/api';
 import { 
   DollarSign, 
   TrendingUp, 

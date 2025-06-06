@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Video, VIDEO_STATUS_LABELS } from '@/types';
-import { getVideosByPackageId, updateVideoStatus } from '@/services/api';
-import { updatePackageStatus } from '@/services/dataService';
+import { getVideosByPackageId, updateVideoStatus, updatePackageStatus } from '@/services/api';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -15,7 +14,8 @@ import {
   TrendingUp, 
   Clock,
   CheckCircle,
-  X
+  X,
+  ExternalLink
 } from 'lucide-react';
 
 interface VideoManagerProps {
@@ -46,6 +46,26 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
       setLoading(false);
     }
   };
+
+  const packageStatusMap = {
+    active: { label: 'Ativo', className: 'bg-blue-100 text-blue-800' },
+    completed: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
+    cancelled: { label: 'Cancelado', className: 'bg-red-100 text-red-800' }
+  };
+  
+  const postStatusMap = {
+    briefing_sent: { label: 'Briefing Enviado', className: 'bg-yellow-100 text-yellow-800' },
+    video_posted: { label: 'Vídeo Postado', className: 'bg-purple-100 text-purple-800' },
+    sent_to_group: { label: 'Enviado no Grupo', className: 'bg-indigo-100 text-indigo-800' },
+    engaged: { label: 'Vídeo Engajado', className: 'bg-pink-100 text-pink-800' }
+  };
+
+  const isPackage = currentPackage.type === 'package';
+
+  const statusInfo = isPackage
+  ? (packageStatusMap[currentPackage.status] ?? { label: currentPackage.status, className: 'bg-gray-100 text-gray-800' })
+  : (postStatusMap[currentPackage.status] ?? { label: currentPackage.status, className: 'bg-gray-100 text-gray-800' });
+
 
   const checkAndUpdatePackageCompletion = async (updatedVideos: Video[]) => {
     // Only check for packages that are currently active
@@ -114,6 +134,10 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
     }
   };
 
+  const handleEngagement = () => {
+    window.open('https://worldsmm.com.br/', '_blank');
+  };
+
   const getStatusIcon = (status: Video['status']) => {
     switch (status) {
       case 'briefing_sent': return Clock;
@@ -166,11 +190,9 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
           <h3 className="text-lg font-semibold">
             Vídeos do Pacote: {pkg.clientName}
           </h3>
-          <Badge className={currentPackage.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
-            {currentPackage.status === 'active' ? 'Ativo' : 
-             currentPackage.status === 'completed' ? 'Concluído' : 
-             currentPackage.status === 'cancelled' ? 'Cancelado' : currentPackage.status}
-          </Badge>
+          <Badge className={statusInfo.className}>
+          {statusInfo.label}
+        </Badge>
         </div>
         <Button variant="outline" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
@@ -203,7 +225,20 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
                   Última atualização: {new Date(video.updatedAt).toLocaleString()}
                 </div>
 
-                {nextStatus && canUpdate && currentPackage.status === 'active' && (
+                
+                {/* Botão Engajar para status "sent_to_group" */}
+                {video.status === 'sent_to_group'  && (
+                  <Button
+                    size="sm"
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    onClick={handleEngagement}
+                  >
+                    <ExternalLink className="mr-2 h-3 w-3" />
+                    Engajar
+                  </Button>
+                )}
+
+                {nextStatus && canUpdate && (
                   <Button
                     size="sm"
                     className="w-full"
