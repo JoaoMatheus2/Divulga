@@ -135,7 +135,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
               <TrendingUp className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Recebido</p>
-                <p className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">R$ {(totalRecebido ?? 0).toFixed(2)}</p>
                 </div>
             </div>
           </CardContent>
@@ -147,7 +147,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
               <DollarSign className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pendente a Receber</p>
-                <p className="text-2xl font-bold text-orange-600">R$ {totalPendenteReceber.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-orange-600">R$ {(totalPendenteReceber ?? 0).toFixed(2)}</p>
               </div>
             </div>
           </CardContent>

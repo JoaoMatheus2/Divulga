@@ -396,7 +396,7 @@ await createPackage({
               <div className="border-t pt-2 flex justify-between font-bold">
                 <span>Lucro Líquido:</span>
                 <span className={financials.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  R$ {financials.netProfit.toFixed(2)}
+                  R$ {(financials.netProfit?? 0).toFixed(2)}
                 </span>
               </div>
             </div>

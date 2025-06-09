@@ -166,7 +166,7 @@ const Dashboard = () => {
                    <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Bem-vindo, {user?.name}!
+                Bem-vindo, {user?.nome}!
               </h1>
               <p className="mt-1 text-sm text-gray-600">
                 Aqui está um resumo das suas atividades recentes.

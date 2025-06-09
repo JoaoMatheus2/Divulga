@@ -201,16 +201,16 @@ const Posts = () => {
                         Lucro Líquido
                       </div>
                       <div className={`font-semibold ${post.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        R$ {post.netProfit.toFixed(2)}
+                        R$ {(post.netProfit ?? 0).toFixed(2)}
                       </div>
                     </div>
                   </div>
 
                   <div className="text-xs text-gray-500 space-y-1">
-                    <div>Comissão Juninho: R$ {post.juninhoCommission.toFixed(2)}</div>
-                    <div>Comissão Natália: R$ {post.nataliaCommission.toFixed(2)}</div>
-                    <div>Pró-Labore: R$ {post.proLabore.toFixed(2)}</div>
-                    <div>Custo Engajamento: R$ {post.engagementCost.toFixed(2)}</div>
+                    <div>Comissão Juninho: R$ {(post.juninhoCommission ?? 0).toFixed(2)}</div>
+                    <div>Comissão Natália: R$ {(post.nataliaCommission ?? 0).toFixed(2)}</div>
+                    <div>Pró-Labore: R$ {(post.proLabore ?? 0).toFixed(2)}</div>
+                    <div>Custo Engajamento: R$ {(post.engagementCost ?? 0).toFixed(2)}</div>
                   </div>
 
                   <div className="pt-3 border-t">

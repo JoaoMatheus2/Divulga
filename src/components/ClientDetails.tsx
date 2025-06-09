@@ -135,7 +135,7 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                R$ {totalRevenue.toFixed(2)}
+                R$ {(totalRevenue ?? 0).toFixed(2)}
               </div>
               <p className="text-gray-600">Receita Total</p>
             </div>
@@ -178,14 +178,14 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
                 {recentPackages.map((pkg) => (
                   <TableRow key={pkg.id}>
                     <TableCell>{ new Date(pkg.createdAt).toLocaleString() }</TableCell>
-                    <TableCell>R$ {pkg.totalValue.toFixed(2)}</TableCell>
+                    <TableCell>R$ {(pkg.totalValue ?? 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(pkg.status)}>
                         {getStatusLabel(pkg.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className={pkg.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      R$ {pkg.netProfit.toFixed(2)}
+                      R$ {(pkg.netProfit ?? 0).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -218,14 +218,14 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
                 {recentPosts.map((pkg) => (
                   <TableRow key={pkg.id}>
                     <TableCell>{ new Date(pkg.createdAt).toLocaleString() }</TableCell>
-                    <TableCell>R$ {pkg.totalValue.toFixed(2)}</TableCell>
+                    <TableCell>R$ {(pkg.totalValue ?? 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(pkg.status)}>
                         {getStatusLabel(pkg.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className={pkg.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      R$ {pkg.netProfit.toFixed(2)}
+                      R$ {(pkg.netProfit ?? 0).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}

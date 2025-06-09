@@ -81,7 +81,7 @@ const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onM
                   <DollarSign className="h-4 w-4 mr-1" />
                   Valor Total
                 </div>
-                <div className="font-semibold">R$ {pkg.totalValue.toFixed(2)}</div>
+                <div className="font-semibold">R$ {(pkg.totalValue ?? 0).toFixed(2)}</div>
               </div>
               
               <div>
@@ -90,7 +90,7 @@ const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onM
                   Lucro Líquido
                 </div>
                 <div className={`font-semibold ${pkg.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  R$ {pkg.netProfit.toFixed(2)}
+                  R$ {(pkg.netProfit ?? 0).toFixed(2)}
                 </div>
               </div>
             </div>

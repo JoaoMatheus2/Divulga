@@ -3,19 +3,19 @@ import { Package, Video, FinancialReport, Client, PaymentStatus } from '@/types'
 
 import { Console } from 'console';
 
-const api = axios.create({
-  baseURL: 'http://localhost:5219',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
 // const api = axios.create({
-//   baseURL: 'https://www.divulga-ai.net.br',
+//   baseURL: 'http://localhost:5219',
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
 // });
+
+const api = axios.create({
+  baseURL: 'https://www.divulga-ai.net.br',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // Interceptor para adicionar o token em todas as requisições
 api.interceptors.request.use((config) => {
@@ -384,60 +384,47 @@ export const deleteClient = async (codigoCliente: number) => {
   }
 }
 
-export const getVideosByPackageId = async (codigoPacote: number) => {
+export const getVideosByPackageId = async (codigoPacote: number, type: string) => {
   try {
-    const response = await api.get(`/api/Pacote/BuscarVideosPacote/${codigoPacote}`);
+    console.log('tipo é ', type);
+    const endpoint = type === 'post'
+      ? `/api/Post/BuscarVideosPacote/${codigoPacote}`
+      : `/api/Pacote/BuscarVideosPacote/${codigoPacote}`;
+      
+    console.log('endpoint ', endpoint);
+
+    const response = await api.get(endpoint);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Erro ao buscar vídeos');
   }
 };
 
-export const updateVideoStatus = async (codigoVideo: number, novoStatus: string) => {
+export const updateVideoStatus = async (
+  codigoVideo: number,
+  novoStatus: string,
+  type: 'post' | 'pacote'
+) => {
   try {
-    console.log('chegamos aqui no updateVideoStatus ' + novoStatus);
+    console.log(`Atualizando status do vídeo [${codigoVideo}] como ${novoStatus} (type: ${type})`);
 
+    const baseRoute = type === 'post' ? 'Post' : 'Pacote';
     const response = await api.patch(
-      `/api/Pacote/AtualizarStatusVideo/${codigoVideo}`,
+      `/api/${baseRoute}/AtualizarStatusVideo/${codigoVideo}`,
       { Status: novoStatus },
       {
         headers: { 'Content-Type': 'application/json' }
       }
     );
 
-    console.log('resposta da api updateVideoStatus: ', response.data);
+    console.log('Resposta da API:', response.data);
     return response.data;
 
   } catch (error: any) {
-    const statusCode = error.response?.status;
-    console.error('Erro na primeira tentativa:', error.response?.data);
-
-    // Se for erro 404, tenta na rota alternativa
-    if (statusCode === 404) {
-      try {
-        console.log('Tentando na rota alternativa /api/Post/AtualizarStatusVideo');
-
-        const fallbackResponse = await api.patch(
-          `/api/Post/AtualizarStatusVideo/${codigoVideo}`,
-          { Status: novoStatus },
-          {
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
-
-        console.log('resposta da api fallback updateVideoStatus: ', fallbackResponse.data);
-        return fallbackResponse.data;
-
-      } catch (fallbackError: any) {
-        console.error('Erro na rota alternativa:', fallbackError.response?.data);
-        throw new Error(fallbackError.response?.data?.message || 'Erro ao atualizar status do vídeo na rota alternativa');
-      }
-    }
-
+    console.error('Erro ao atualizar status do vídeo:', error.response?.data);
     throw new Error(error.response?.data?.message || 'Erro ao atualizar status do vídeo');
   }
 };
-
 
 
 export default api;

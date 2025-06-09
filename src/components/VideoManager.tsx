@@ -37,8 +37,9 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
 
   const loadVideos = async () => {
     try {
-      const data = await getVideosByPackageId(pkg.id);
-      console.log('Dados recebidos:', data);
+      console.log('codigo do pacote', pkg.id);
+      const data = await getVideosByPackageId(pkg.id, pkg.type);
+      console.log('Dados recebidos getVideosByPackageId:', data);
       setVideos(data);
     } catch (error) {
       console.error('Erro ao carregar vídeos:', error);
@@ -95,7 +96,7 @@ const VideoManager: React.FC<VideoManagerProps> = ({ package: pkg, onClose }) =>
     setUpdating(videoId);
     
     try {
-      const updatedVideo = await updateVideoStatus(videoId, newStatus);
+      const updatedVideo = await updateVideoStatus(videoId, newStatus, currentPackage.type);
       
       if (updatedVideo) {
         const updatedVideos = videos.map(video => 

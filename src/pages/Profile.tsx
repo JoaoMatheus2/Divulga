@@ -93,11 +93,11 @@ const Profile = () => {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarFallback className="bg-blue-600 text-white text-xl">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.nome.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-xl font-semibold">{user.name}</h3>
+                  <h3 className="text-xl font-semibold">{user.nome}</h3>
                   <Badge className={getRoleColor(user.role)}>
                     {getRoleLabel(user.role)}
                   </Badge>
@@ -110,7 +110,7 @@ const Profile = () => {
                     <Mail className="h-4 w-4 mr-2" />
                     <span className="text-sm">Email</span>
                   </div>
-                  <p className="font-medium">{user.email}</p>
+                  <p className="font-medium">{user.login}</p>
                 </div>
 
                 <div className="space-y-3">
