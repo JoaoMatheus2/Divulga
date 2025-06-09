@@ -16,7 +16,9 @@ import {
   Play,
   Clock,
   CheckCircle,
-  Plus
+  Plus,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const getIconByType = (type: string) => {
@@ -45,11 +47,13 @@ interface MetricCard {
   icon: React.ComponentType<any>;
   trend?: string;
   color: string;
+    isFinancial?: boolean;
 }
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<MetricCard[]>([]);
+  const [showValues, setShowValues] = useState(true);
 
   useEffect(() => {
     fetchMetrics();
@@ -87,8 +91,8 @@ const Dashboard = () => {
           value: `R$ ${data.somaTotalReceita ?? 0}`,
           icon: DollarSign,
           trend: `${data.variacaoPercentualReceita >= 0 ? '+' : ''}${data.variacaoPercentualReceita?.toFixed(2) ?? '0'}% este mês`,
-          color: 'text-yellow-600'
-        }
+        color: 'text-yellow-600',
+        isFinancial: true        }
       ];
   
       setMetrics(metricsArray);
@@ -148,16 +152,36 @@ const Dashboard = () => {
     }
   };
 
+ const formatValue = (metric: MetricCard) => {
+    if (metric.isFinancial && !showValues) {
+      return '•••••';
+    }
+    return metric.value;
+  };
+
   return (
     <Layout>
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Bem-vindo, {user?.nome}!
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Aqui está um resumo das suas atividades recentes.
-          </p>
+                   <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Bem-vindo, {user?.name}!
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Aqui está um resumo das suas atividades recentes.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowValues(!showValues)}
+              className="flex items-center gap-2"
+            >
+              {showValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showValues ? 'Ocultar valores' : 'Mostrar valores'}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -172,7 +196,7 @@ const Dashboard = () => {
                   <Icon className={`h-4 w-4 ${metric.color}`} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <div className="text-2xl font-bold">{formatValue(metric)}</div>
                   {metric.trend && (
                     <p className="text-xs text-gray-600 mt-1">
                       {metric.trend}

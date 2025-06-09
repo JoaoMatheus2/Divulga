@@ -54,6 +54,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
         const totalPagoCalc = pagar.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
         const totalPendenteReceberCalc = receber.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
         const totalPendentePagarCalc = pagar.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+        console.log('total pendente a pagar ', totalPendentePagar);
 
         setTotalRecebido(totalRecebidoCalc);
         setTotalPago(totalPagoCalc);
@@ -158,7 +159,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
               <TrendingDown className="h-8 w-8 text-red-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Pago</p>
-                <p className="text-2xl font-bold text-red-600">R$ {totalPago.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-red-600">R$ {(totalPago ?? 0).toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -170,7 +171,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
             <DollarSign className="h-8 w-8 text-yellow-600" />
               <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Pendente a Pagar</p>
-                <p className="text-2xl font-bold text-yellow-600">R$ {totalPendentePagar.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-yellow-600">R$ {(totalPendentePagar ?? 0).toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -203,7 +204,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
                     />
                     <div>
                       <p className="font-medium">{payment.name}</p>
-                      <p className="text-sm text-gray-600">R$ {payment.amount.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">R$ {(payment.amount ?? 0).toFixed(2)}</p>
                     </div>
                   </div>
                   <Badge className={payment.paid ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}>
@@ -240,7 +241,7 @@ const PaymentManager: React.FC<PaymentManagerProps> = ({ package: pkg, onClose, 
                     />
                     <div>
                       <p className="font-medium">{payment.name}</p>
-                      <p className="text-sm text-gray-600">R$ {payment.amount.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">R$ {(payment.amount ?? 0).toFixed(2)}</p>
                     </div>
                   </div>
                   <Badge className={payment.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>

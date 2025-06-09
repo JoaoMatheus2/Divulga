@@ -3,19 +3,19 @@ import { Package, Video, FinancialReport, Client, PaymentStatus } from '@/types'
 
 import { Console } from 'console';
 
-// const api = axios.create({
-//   baseURL: 'http://localhost:5219',
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
 const api = axios.create({
-  baseURL: 'https://www.divulga-ai.net.br',
+  baseURL: 'http://localhost:5219',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// const api = axios.create({
+//   baseURL: 'https://www.divulga-ai.net.br',
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
 // Interceptor para adicionar o token em todas as requisições
 api.interceptors.request.use((config) => {
@@ -104,11 +104,15 @@ export const getPosts = async () => {
   }
 };
 
-export const createPackage = async (packageData: Package): Promise<any> => {
+export const createPackage = async (
+  packageData: Package & { videoCount?: number }
+): Promise<any> => {
   try {
     console.log('dados pacote para cadastro ', packageData);
+    const videoCount = packageData.videoCount ?? (packageData.type === 'package' ? 5 : 1);
 
-    // Monta o DTO conforme a API espera
+    console.log('quantidade de vídeos videoCount: ', videoCount);
+    console.log('quantidade de vídeos packageData.videoCount', packageData.videoCount)
     const pacoteDTO = {
       totalValue: packageData.totalValue,
       juninhoCommission: packageData.juninhoCommission,
@@ -117,22 +121,23 @@ export const createPackage = async (packageData: Package): Promise<any> => {
       proLabore: packageData.proLabore,
       netProfit: packageData.netProfit,
       clientId: packageData.clientId,
-      clientName: packageData.clientName,  // PRECISA ter isso
-      type: packageData.type,              // PRECISA ter isso
-      status: packageData.status,          // PRECISA ter isso
-      listaPacoteItem: [] as { numeroVideo: number; }[]
+      clientName: packageData.clientName,
+      type: packageData.type,
+      status: packageData.status,
+      listaPacoteItem: [] as { numeroVideo: number }[]
     };
 
     let endpoint = '/api/Pacote/Inserir';
 
-    // Se for pacote, cria os 5 itens
-    if (packageData.type === 'package') {
-      for (let i = 1; i <= 5; i++) {
-        pacoteDTO.listaPacoteItem.push({
-          numeroVideo: i
-        });
-      }
-    } else if (packageData.type === 'post') {
+    // Cria a quantidade de vídeos com base no videoCount
+    for (let i = 1; i <= videoCount; i++) {
+      pacoteDTO.listaPacoteItem.push({
+        numeroVideo: i
+      });
+    }
+
+    // Se for tipo post, altera o endpoint
+    if (packageData.type === 'post') {
       console.log('criando post');
       endpoint = '/api/Post/Inserir';
     }
@@ -143,7 +148,7 @@ export const createPackage = async (packageData: Package): Promise<any> => {
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Erro ao criar pacote');
   }
-}
+};
 
 export const updatePackageStatus = async (codigo: number, status: string): Promise<any> => {
   try {
@@ -211,13 +216,44 @@ export const getPackagePaymentSummary = async (codigopacote: number, type: strin
     console.log('resposta da api getPackagePaymentSummary: ', response.data);
     const pkg = response.data;
 
-    const payments = [
-      { name: 'Valor Total', amount: pkg.totalValue, paid: pkg.paymentStatusDTO?.totalValuePaid ?? 0, field: 'totalValuePaid' as keyof PaymentStatus },
-      { name: 'Comissão Juninho', amount: pkg.juninhoCommission, paid: pkg.paymentStatusDTO?.juninhoCommissionPaid ?? 0, field: 'juninhoCommissionPaid' as keyof PaymentStatus },
-      { name: 'Comissão Natália', amount: pkg.nataliaCommission, paid: pkg.paymentStatusDTO?.nataliaCommissionPaid ?? 0, field: 'nataliaCommissionPaid' as keyof PaymentStatus },
-      { name: 'Custo Engajamento', amount: pkg.engagementCost, paid: pkg.paymentStatusDTO?.engagementCostPaid ?? 0, field: 'engagementCostPaid' as keyof PaymentStatus },
-      { name: 'Pró-Labore', amount: pkg.proLabore, paid: pkg.paymentStatusDTO?.proLaborePaid ?? 0, field: 'proLaborePaid' as keyof PaymentStatus }
-    ];
+    
+const payments = [
+  {
+    name: 'Valor Total',
+    amount: Number(pkg.totalValue) || 0,
+    paid: Number(pkg.paymentStatusDTO?.totalValuePaid) || 0,
+    field: 'totalValuePaid' as keyof PaymentStatus
+  },
+  {
+    name: 'Comissão Juninho',
+    amount: Number(pkg.juninhoCommission) || 0,
+    paid: Number(pkg.paymentStatusDTO?.juninhoCommissionPaid) || 0,
+    field: 'juninhoCommissionPaid' as keyof PaymentStatus
+  },
+  {
+    name: 'Comissão Natália',
+    amount: Number(pkg.nataliaCommission) || 0,
+    paid: Number(pkg.paymentStatusDTO?.nataliaCommissionPaid) || 0,
+    field: 'nataliaCommissionPaid' as keyof PaymentStatus
+  },
+  {
+    name: 'Custo Engajamento',
+    amount: Number(pkg.engagementCost) || 0,
+    paid: Number(pkg.paymentStatusDTO?.engagementCostPaid) || 0,
+    field: 'engagementCostPaid' as keyof PaymentStatus
+  },
+  {
+    name: 'Pró-Labore',
+    amount: Number(pkg.proLabore) || 0,
+    paid: Number(pkg.paymentStatusDTO?.proLaborePaid) || 0,
+    field: 'proLaborePaid' as keyof PaymentStatus
+  }
+];
+
+
+payments.forEach(p => {
+  console.log(`${p.name} -> amount:`, p.amount, '| paid:', p.paid);
+});
 
     const totalPaid = payments.reduce((sum, p) => sum + (p.paid ?? 0), 0);
     const totalPending = payments.reduce((sum, p) => sum + ((p.amount ?? 0) - (p.paid ?? 0)), 0);
@@ -304,15 +340,15 @@ export const getFinancialReport = async (startDate?: Date, endDate?: Date): Prom
     }
 
     // Faz os cálculos como no exemplo anterior
-    const totalRevenue = filteredPackages.reduce((sum, pkg) => sum + pkg.totalValue, 0);
-    const totalJuninhoCommission = filteredPackages.reduce((sum, pkg) => sum + pkg.juninhoCommission, 0);
-    const totalNataliaCommission = filteredPackages.reduce((sum, pkg) => sum + pkg.nataliaCommission, 0);
-    const totalEngagementCost = filteredPackages.reduce((sum, pkg) => sum + pkg.engagementCost, 0);
-    const totalProLabore = filteredPackages.reduce((sum, pkg) => sum + pkg.proLabore, 0);
-    const netProfit = filteredPackages.reduce((sum, pkg) => sum + pkg.netProfit, 0);
+const totalRevenue = filteredPackages.reduce((sum, pkg) => sum + (pkg.totalValue ?? 0), 0);
+const totalJuninhoCommission = filteredPackages.reduce((sum, pkg) => sum + (pkg.juninhoCommission ?? 0), 0);
+const totalNataliaCommission = filteredPackages.reduce((sum, pkg) => sum + (pkg.nataliaCommission ?? 0), 0);
+const totalEngagementCost = filteredPackages.reduce((sum, pkg) => sum + (pkg.engagementCost ?? 0), 0);
+const totalProLabore = filteredPackages.reduce((sum, pkg) => sum + (pkg.proLabore ?? 0), 0);
+const netProfit = filteredPackages.reduce((sum, pkg) => sum + (pkg.netProfit ?? 0), 0);
 
-    const packagesCount = filteredPackages.filter(pkg => pkg.type === 'package').length;
-    const postsCount = filteredPackages.filter(pkg => pkg.type === 'post').length;
+const packagesCount = filteredPackages.filter(pkg => pkg.type === 'package').length;
+const postsCount = filteredPackages.filter(pkg => pkg.type === 'post').length;
 
     return {
       totalRevenue,

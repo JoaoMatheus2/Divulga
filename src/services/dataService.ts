@@ -82,10 +82,11 @@ export const getClientRevenue = async (clientId: string): Promise<number> => {
   return clientPackages.reduce((sum, pkg) => sum + pkg.totalValue, 0);
 };
 
-// Create a new package
-export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt' | 'paymentStatus'>): Promise<Package> => {
+export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt' | 'updatedAt' | 'paymentStatus'> & { videoCount?: number }): Promise<Package> => {
+  const { videoCount, ...restPackageData } = packageData;
+  
   const newPackage: Package = {
-    ...packageData,
+    ...restPackageData,
     id: generateId(),
     paymentStatus: {
       totalValuePaid: false,
@@ -100,33 +101,21 @@ export const createPackage = async (packageData: Omit<Package, 'id' | 'createdAt
 
   packages.push(newPackage);
 
-  // Create videos automatically for both packages and posts
-  if (packageData.type === 'package') {
-        // Packages have 5 videos
-    for (let i = 1; i <= 5; i++) {
-      const video: Video = {
-        id: generateId(),
-        packageId: newPackage.id,
-        videoNumber: i,
-        status: 'briefing_sent',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      videos.push(video);
-    }
-  }else if (packageData.type === 'post') {
-    // Posts have 1 video
+  // Create videos based on the specified count or default behavior
+  const videosToCreate = videoCount || (packageData.type === 'package' ? 5 : 1);
+  
+  for (let i = 1; i <= videosToCreate; i++) {
     const video: Video = {
       id: generateId(),
       packageId: newPackage.id,
-      videoNumber: 1,
-      status: 'briefing_sent',
+      videoNumber: i,
+      status: 'Briefing Enviado',
       createdAt: new Date(),
       updatedAt: new Date()
     };
     videos.push(video);
-
   }
+
   return newPackage;
 };
 

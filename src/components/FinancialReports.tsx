@@ -25,8 +25,11 @@ import { useQuery } from '@tanstack/react-query';
 import { getPackages, getClients } from '@/services/api';
 import { Client, Package } from '@/types';
 
-const FinancialReports: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth');
+interface FinancialReportsProps {
+  showValues?: boolean;
+}
+
+const FinancialReports: React.FC<FinancialReportsProps> = ({ showValues = true }) => {  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [clientsOpen, setClientsOpen] = useState(false);
 
@@ -103,26 +106,27 @@ const FinancialReports: React.FC = () => {
         });
       }
       
-      const monthData = monthsMap.get(monthKey);
-      monthData.receita += pkg.totalValue;
-      monthData.despesas += pkg.juninhoCommission + pkg.nataliaCommission + pkg.engagementCost + pkg.proLabore;
-      monthData.lucro = monthData.receita - monthData.despesas;
+const monthData = monthsMap.get(monthKey);
+monthData.receita += pkg.totalValue ?? 0;
+monthData.despesas += (pkg.juninhoCommission ?? 0) + (pkg.nataliaCommission ?? 0) + (pkg.engagementCost ?? 0) + (pkg.proLabore ?? 0);
+monthData.lucro = monthData.receita - monthData.despesas;
     });
     
     return Array.from(monthsMap.values()).sort((a, b) => a.month.localeCompare(b.month));
   }, [filteredPackages]);
 
-  const totalRevenue = filteredPackages.reduce((sum, pkg) => sum + pkg.totalValue, 0);
-  const totalExpenses = filteredPackages.reduce((sum, pkg) => 
-    sum + pkg.juninhoCommission + pkg.nataliaCommission + pkg.engagementCost + pkg.proLabore, 0
-  );
-  const totalProfit = totalRevenue - totalExpenses;
+  const totalRevenue = filteredPackages.reduce((sum, pkg) => sum + (pkg.totalValue ?? 0), 0);
+const totalExpenses = filteredPackages.reduce((sum, pkg) => 
+  sum + (pkg.juninhoCommission ?? 0) + (pkg.nataliaCommission ?? 0) + (pkg.engagementCost ?? 0) + (pkg.proLabore ?? 0), 0
+);
+const totalProfit = totalRevenue - totalExpenses;
 
   const expenseData = useMemo(() => {
-    const totalJuninho = filteredPackages.reduce((sum, pkg) => sum + pkg.juninhoCommission, 0);
-    const totalNatalia = filteredPackages.reduce((sum, pkg) => sum + pkg.nataliaCommission, 0);
-    const totalEngagement = filteredPackages.reduce((sum, pkg) => sum + pkg.engagementCost, 0);
-    const totalProLabore = filteredPackages.reduce((sum, pkg) => sum + pkg.proLabore, 0);
+  const totalJuninho = filteredPackages.reduce((sum, pkg) => sum + (pkg.juninhoCommission ?? 0), 0);
+  const totalNatalia = filteredPackages.reduce((sum, pkg) => sum + (pkg.nataliaCommission ?? 0), 0);
+  const totalEngagement = filteredPackages.reduce((sum, pkg) => sum + (pkg.engagementCost ?? 0), 0);
+  const totalProLabore = filteredPackages.reduce((sum, pkg) => sum + (pkg.proLabore ?? 0), 0);
+
     
     return [
       { name: 'Comissão Juninho', value: totalJuninho, color: '#8884d8' },
@@ -131,6 +135,16 @@ const FinancialReports: React.FC = () => {
       { name: 'Pró-Labore', value: totalProLabore, color: '#ff7300' },
     ].filter(item => item.value > 0);
   }, [filteredPackages]);
+
+  const formatCurrency = (value: number) => {
+    if (!showValues) {
+      return '•••••';
+    }
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
 
   const handleClientSelect = (clientId: string) => {
     setSelectedClients(prev => 
@@ -249,10 +263,7 @@ const FinancialReports: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              }).format(totalRevenue)}
+              {formatCurrency(totalRevenue)}
             </div>
             <p className="text-xs text-gray-600 mt-1">
               {filteredPackages.length} {filteredPackages.length === 1 ? 'pacote/post' : 'pacotes/posts'}
@@ -266,10 +277,7 @@ const FinancialReports: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              }).format(totalExpenses)}
+              {formatCurrency(totalExpenses)}
             </div>
             <p className="text-xs text-gray-600 mt-1">
               Comissões + Engajamento + Pró-Labore
@@ -283,10 +291,8 @@ const FinancialReports: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              }).format(totalProfit)}
+              {formatCurrency(totalProfit)}
+
             </div>
             <p className="text-xs text-gray-600 mt-1">
               {totalProfit >= 0 ? 'Lucro positivo' : 'Prejuízo'}
@@ -317,10 +323,10 @@ const FinancialReports: React.FC = () => {
                     <YAxis />
                     <Tooltip 
                       formatter={(value: number) => [
-                        new Intl.NumberFormat('pt-BR', {
+                        showValues ? new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(value),
+                        }).format(value) : '•••••',
                         ''
                       ]}
                     />
@@ -367,10 +373,10 @@ const FinancialReports: React.FC = () => {
                     </Pie>
                     <Tooltip 
                       formatter={(value: number) => [
-                        new Intl.NumberFormat('pt-BR', {
+                        showValues ? new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(value),
+                        }).format(value) : '•••••',
                         ''
                       ]}
                     />

@@ -128,10 +128,10 @@ const PackageList: React.FC<PackageListProps> = ({ packages, onManageVideos, onM
             </div>
 
             <div className="text-xs text-gray-500 space-y-1">
-              <div>Comissão Juninho: R$ {pkg.juninhoCommission.toFixed(2)}</div>
-              <div>Comissão Natália: R$ {pkg.nataliaCommission.toFixed(2)}</div>
-              <div>Custo Engajamento: R$ {pkg.engagementCost.toFixed(2)}</div>
-              <div>Pró-Labore: R$ {pkg.proLabore.toFixed(2)}</div>
+              <div>Comissão Juninho: R$ {(pkg.juninhoCommission ?? 0).toFixed(2)}</div>
+              <div>Comissão Natália: R$ {(pkg.nataliaCommission ?? 0).toFixed(2)}</div>
+              <div>Custo Engajamento: R$ {(pkg.engagementCost ?? 0).toFixed(2)}</div>
+              <div>Pró-Labore: R$ {(pkg.proLabore ?? 0).toFixed(2)}</div>
             </div>
           </CardContent>
         </Card>

@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Package, Client } from '@/types';
 import {  calculateFinancials } from '@/services/dataService';
 import {  getClients, createPackage } from '@/services/api';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { DollarSign, Calculator, ChevronDown } from 'lucide-react';
+import { DollarSign, Calculator, ChevronDown, Video } from 'lucide-react';
 
 interface PackageFormProps {
   type: 'package' | 'post';
@@ -24,8 +25,21 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
     clientName: '',
-    totalValue: 0
+      totalValue: 0,
+    videoCount: type === 'package' ? 5 : 1
   });
+  
+  const [costSettings, setCostSettings] = useState({
+    includeJuninhoCommission: true,
+    juninhoCommissionValue: 20,
+    includeNataliaCommission: true,
+    nataliaCommissionPercentage: 5,
+    includeEngagementCost: true,
+    engagementCostPerVideo: 2,
+    includeProLabore: true,
+    proLaborePercentage: 70
+  });
+
   const [financials, setFinancials] = useState({
     juninhoCommission: 20,
     nataliaCommission: 0,
@@ -33,11 +47,16 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
     proLabore: 0,
     netProfit: 0
   });
+  
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadClients();
   }, []);
+
+  useEffect(() => {
+    updateFinancials();
+  }, [formData.totalValue, formData.videoCount, costSettings]);
 
   const loadClients = async () => {
     try {
@@ -48,9 +67,22 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
     }
   };
 
-  const updateFinancials = (totalValue: number) => {
-    const calculated = calculateFinancials(totalValue, type);
-    setFinancials(calculated);
+const updateFinancials = () => {
+    const totalValue = formData.totalValue;
+    
+    const juninhoCommission = costSettings.includeJuninhoCommission ? costSettings.juninhoCommissionValue : 0;
+    const nataliaCommission = costSettings.includeNataliaCommission ? (totalValue * costSettings.nataliaCommissionPercentage / 100) : 0;
+    const engagementCost = costSettings.includeEngagementCost ? (costSettings.engagementCostPerVideo * formData.videoCount) : 0;
+    const proLabore = costSettings.includeProLabore ? (totalValue * costSettings.proLaborePercentage / 100) : 0;
+    const netProfit = totalValue - juninhoCommission - nataliaCommission - engagementCost - proLabore;
+
+    setFinancials({
+      juninhoCommission,
+      nataliaCommission,
+      engagementCost,
+      proLabore,
+      netProfit
+    });
   };
 
   const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +110,15 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
   const handleTotalValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value) || 0;
     setFormData(prev => ({ ...prev, totalValue: value }));
-    updateFinancials(value);
+  };
+
+ const handleVideoCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1;
+    setFormData(prev => ({ ...prev, videoCount: Math.max(1, value) }));
+  };
+
+  const handleCostSettingChange = (field: keyof typeof costSettings, value: any) => {
+    setCostSettings(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,10 +146,15 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
         engagementCost: financials.engagementCost,
         proLabore: financials.proLabore,
         netProfit: financials.netProfit,
-        status: 'active'
+        status: 'active',
       };
 
-      await createPackage(packageData);
+await createPackage({
+  ...packageData, videoCount: formData.videoCount,
+  id: '',
+  createdAt: undefined,
+  updatedAt: undefined
+});
 
       addNotification({
         title: 'Sucesso',
@@ -131,8 +176,10 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Informações Básicas */}
         <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Informações Básicas</h3>
           <div className="relative">
             <Label htmlFor="clientName">Nome do Cliente *</Label>
             <div className="relative">
@@ -147,7 +194,6 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
                   }
                 }}
                 onBlur={() => {
-                  // Delay hiding dropdown to allow for click
                   setTimeout(() => setShowDropdown(false), 200);
                 }}
                 placeholder="Digite o nome do cliente"
@@ -191,8 +237,126 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
               required
             />
           </div>
+  <div>
+            <Label htmlFor="videoCount">Quantidade de Vídeos</Label>
+            <div className="flex items-center space-x-2">
+              <Video className="h-4 w-4 text-gray-400" />
+              <Input
+                id="videoCount"
+                type="number"
+                min="1"
+                value={formData.videoCount}
+                onChange={handleVideoCountChange}
+                className="flex-1"
+              />
+            </div>
+          </div>
         </div>
 
+        {/* Configurações de Custos */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Configurações de Custos</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Comissão Juninho</Label>
+                  <p className="text-sm text-gray-500">Valor fixo</p>
+                </div>
+                <Switch
+                  checked={costSettings.includeJuninhoCommission}
+                  onCheckedChange={(checked) => handleCostSettingChange('includeJuninhoCommission', checked)}
+                />
+              </div>
+              {costSettings.includeJuninhoCommission && (
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={costSettings.juninhoCommissionValue}
+                  onChange={(e) => handleCostSettingChange('juninhoCommissionValue', parseFloat(e.target.value) || 0)}
+                  placeholder="R$ 20,00"
+                />
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Comissão Natália</Label>
+                  <p className="text-sm text-gray-500">Percentual do valor total</p>
+                </div>
+                <Switch
+                  checked={costSettings.includeNataliaCommission}
+                  onCheckedChange={(checked) => handleCostSettingChange('includeNataliaCommission', checked)}
+                />
+              </div>
+              {costSettings.includeNataliaCommission && (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={costSettings.nataliaCommissionPercentage}
+                    onChange={(e) => handleCostSettingChange('nataliaCommissionPercentage', parseFloat(e.target.value) || 0)}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Custo Engajamento</Label>
+                  <p className="text-sm text-gray-500">Por vídeo × quantidade</p>
+                </div>
+                <Switch
+                  checked={costSettings.includeEngagementCost}
+                  onCheckedChange={(checked) => handleCostSettingChange('includeEngagementCost', checked)}
+                />
+              </div>
+              {costSettings.includeEngagementCost && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">R$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={costSettings.engagementCostPerVideo}
+                    onChange={(e) => handleCostSettingChange('engagementCostPerVideo', parseFloat(e.target.value) || 0)}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-500">× {formData.videoCount}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Pró-Labore</Label>
+                  <p className="text-sm text-gray-500">Percentual do valor total</p>
+                </div>
+                <Switch
+                  checked={costSettings.includeProLabore}
+                  onCheckedChange={(checked) => handleCostSettingChange('includeProLabore', checked)}
+                />
+              </div>
+              {costSettings.includeProLabore && (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={costSettings.proLaborePercentage}
+                    onChange={(e) => handleCostSettingChange('proLaborePercentage', parseFloat(e.target.value) || 0)}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cálculos Automáticos */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center mb-4">
@@ -201,22 +365,34 @@ const PackageForm: React.FC<PackageFormProps> = ({ type, onSuccess, onCancel }) 
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span>Comissão Juninho:</span>
-                <span className="font-medium">R$ {financials.juninhoCommission.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Comissão Natália (5%):</span>
-                <span className="font-medium">R$ {financials.nataliaCommission.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Custo Engajamento:</span>
-                <span className="font-medium">R$ {financials.engagementCost.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Pró-Labore (70%):</span>
-                <span className="font-medium">R$ {financials.proLabore.toFixed(2)}</span>
-              </div>
+               {costSettings.includeJuninhoCommission && (
+                <div className="flex justify-between">
+                  <span>Comissão Juninho:</span>
+                  <span className="font-medium">R$ {(financials.juninhoCommission ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              
+              {costSettings.includeNataliaCommission && (
+                <div className="flex justify-between">
+                  <span>Comissão Natália ({costSettings.nataliaCommissionPercentage}%):</span>
+                  <span className="font-medium">R$ {(financials.nataliaCommission ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              
+              {costSettings.includeEngagementCost && (
+                <div className="flex justify-between">
+                  <span>Custo Engajamento ({formData.videoCount}x):</span>
+                  <span className="font-medium">R$ {(financials.engagementCost ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              
+              {costSettings.includeProLabore && (
+                <div className="flex justify-between">
+                  <span>Pró-Labore ({costSettings.proLaborePercentage}%):</span>
+                  <span className="font-medium">R$ {(financials.proLabore ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              
               <div className="border-t pt-2 flex justify-between font-bold">
                 <span>Lucro Líquido:</span>
                 <span className={financials.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
